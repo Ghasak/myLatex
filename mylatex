@@ -34,6 +34,9 @@ help() {
 	       : this command line will handle the extension,
 	       : you may input only one single name for a single file at a time.
 	       : We assume you have installed already the dependicies
+	       : for the compilation, such as pdflatex, bibtex, makeindex, etc.
+	       : ${YELLOW}myLatex${NC} will compile the file and watch the output.
+	       : ${YELLOW}NOTE${NC}: You will need to specify the file type as <file_name.tex> for macOS env.
 
                 ======================== Linux  Ubuntu 20.04 dependencies ========================
 		---------- to complile your latex file ---------------
@@ -140,15 +143,15 @@ function macOS_latex_compiler() {
 			versions
 			exit 1
 		# Handle if the user correctly input a file that existed in the given directory, then start compiling.
-		elif [[ -f $1 ]]; then
+		elif [[ $1 == *.tex ]]; then
 			if [ $# -gt 0 ] && [ "$2" = "" ]; then
 				echo "Your command line contains $# arguments"
 				echo -e "${YELLOW}Title${NC}:$TITLE"
 				echo -e "${RED}$RIGHT_NOW${NC}"
 				echo -e "Updated on ${YELLOW}$RIGHT_NOW${NC} by ${BLUE}$USER${NC}"
-				PAPER=$(echo "$1.tex")
+				PAPER=$(echo "$1")
 				echo "*******************************"
-				echo -e "Compling now PAPER = ${BLUE}$PAPER.tex${NC}"
+				echo -e "Compling now PAPER = ${BLUE}$PAPER${NC}"
 				echo "*******************************"
 				rubber --pdf $PAPER >>/dev/null &
 				counter=1
@@ -164,20 +167,21 @@ function macOS_latex_compiler() {
 					sleep 0.01
 					counter=$((counter + 1))
 				done
-			else
-				echo "Your command line contains no arguments ... "
-				read -p "$(echo -e "See help: Continue? (${YELLOW}Y${NC}/${YELLOW}N${NC}): ")" confirm
-				if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
-					do_you_want_to_continue=true
-					help
-				else
-					exit 1
-				fi
 			fi
-		# Handle if the user correctly input a file that existed in the given directory, otherwise
-		else
-			echo -e "${RED}$1${NC} is not a file ... " >>/dev/null 2>&1
+
+		elif [[ -z $1 ]]; then
+			echo "Your command line contains no arguments ... "
+			read -p "$(echo -e "See help: Continue? (${YELLOW}Y${NC}/${YELLOW}N${NC}): ")" confirm
+			if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+				help
+				exit 1
+			else
+				exit 1
+			fi
 			do_you_want_to_continue=false
+			exit 1
+		else
+			echo -e "${RED}$1${NC} is not a latex-file ... "
 			exit 1
 		fi
 	done

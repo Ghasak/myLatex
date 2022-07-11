@@ -2,6 +2,10 @@
 A CLI for updating and auto-compiling `*.tex ` file in Latex Environment. Work
 for both GNU LINUX and macOS.
 
+![Image01](./assets/Image01.png)
+![Image02](./assets/Image02.png)
+
+
 ## Requirements
 ### macOS
 We will need the following requirements:
