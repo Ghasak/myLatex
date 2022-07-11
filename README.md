@@ -49,3 +49,25 @@ You will need only these packages:
 sudo apt-get install rubber
 sudo apt-get install inotify-tools
 ```
+# Setup
+A simple curl for my `raw-script` which can be used to check the script, or map it to your machine
+```shell
+# To watch
+curl -L https://raw.githubusercontent.com/Ghasak/myLatex/main/mylatex | bat
+# To install
+mkdir ~/.mylatex # or whatever
+cd ~/.mylatex
+touch mylatex
+curl -L https://raw.githubusercontent.com/Ghasak/myLatex/main/mylatex >> ~/.mylatex/mylatex
+chmod -x ~/.mylatex/mylatex
+# In your .profile, or .zshrc or .bashrc whatever is your running shell, put
+source PATH="$PATH:$HOME/.mylatex/"
+
+```
+# How to use
+keep the shell running to monitor your `.text` script-file.
+```shell
+mylatex text_file.tex
+```
+
+
