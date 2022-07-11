@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+#==============================================================================
+# Copyright(c) 2022 Ghasak Ibrahim
+# No license is requried, you may use this file as you please.
+# title           : myLatex command line
+# description     : command line to recompile the latexfile automatelly
+# author          : Ghasak Ibrahim
+# date            : 2022/07/9 Saturday 02:35 am
+# usage           : for only single file right now,
+# notes           : file_name should not include the extension
+# Usage: myLatex [options] <file_name>.tex
+# details: https://scaron.info/blog/makefiles-for-latex.html
+#
+# Options:
+#   -h, --help    Display this message.
+# Debugging:
+#   bash -x ./myLatex (execute this command where the soruce file is located)
+#==============================================================================
+
+##### Constants
+TITLE="Compile and watch on system: $HOSTNAME"
+RIGHT_NOW="$(date +"%x %r %Z")"
+TIME_STAMP="Updated on $RIGHT_NOW by $USER"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+help() {
+	echo -e "Usage: ${YELLOW}myLatex${NC} [${RED}options${NC}] <${MAGENTA}file_name${NC}>.tex ]
+	       : file_name should be without extension, such as (test)
+	       : this command line will handle the extension,
+	       : you may input only one single name for a single file at a time.
+	       : We assume you have installed already the dependicies
+
+                ======================== Linux  Ubuntu 20.04 dependencies ========================
+		---------- to complile your latex file ---------------
+		${YELLOW}rubber${NC} -> (${GREEN}sudo apt-get install rubber${NC})
+		---------- to keep watching changes in a file --------
+		${YELLOW}inotify-tools package${NC} -> (${GREEN}sudo apt-get install inotify-tools${NC}).
+
+               : to see this message [ ${BLUE}-h${NC} | ${BLUE}--help${NC}  ]
+
+	       ========================= MacOS dependencies =========================
+	       to install rubber use:
+			Here: ${BLUE}https://tex.stackexchange.com/questions/482780/how-to-install-rubber-on-macos${NC}
+			you will python3 to complile and run here (${BLUE}https://gitlab.com/latex-rubber/rubber/${NC})
+
+	       to install inotify-tools use:
+			The inotify-tools package is not available for macOS. instead use ${RED}fswatch${NC}.
+			${BLUE}https://stackoverflow.com/questions/1515730/is-there-a-command-like-watch-or-inotifywait-on-the-mac${NC}
+			${BLUE}https://www.linux.com/how-to-install-fswatch-on-macos-10-12-for-linux-based-systems${NC}
+		"
+
+	exit 2
+}
+
+function versions() {
+	echo -e "
+		${YELLOW}myLatex${NC} version: ${BLUE}0.1.0${NC}
+		${YELLOW}myLatex${NC} author: ${BLUE}Ghasak Ibrahim${NC}
+		${YELLOW}myLatex${NC} date: ${BLUE}2020/07/09${NC}
+		${YELLOW}myLatex${NC} time: ${BLUE}02:35 am${NC}
+		${YELLOW}myLatex${NC} system: ${BLUE}$HOSTNAME${NC}
+		${YELLOW}myLatex${NC} user: ${BLUE}$USER${NC}
+		${YELLOW}myLatex${NC} version: ${BLUE}$RIGHT_NOW${NC}
+		${YELLOW}myLatex${NC} ${BLUE}$TIME_STAMP${NC}
+		"
+	exit 2
+}
+
+function ubuntu_latex_compiler() {
+
+	do_you_want_to_continue=true
+	while [ "$do_you_want_to_continue" = true ]; do
+		if [[ $1 == "-h" || $1 == "--help" ]]; then
+			help
+			exit 1
+		elif [[ $1 == [vV] || $1 == [Vv][ersion] ]]; then
+			versions
+			exit 1
+		else
+
+			if [ $# -gt 0 ] && [ "$2" = "" ]; then
+				echo "Your command line contains $# arguments"
+				echo -e "${YELLOW}Title${NC}:$TITLE"
+				echo -e "${RED}$RIGHT_NOW${NC}"
+				echo -e "Updated on ${YELLOW}$RIGHT_NOW${NC} by ${BLUE}$USER${NC}"
+				PAPER=$(echo "$1.tex")
+				echo "*******************************"
+				echo -e "Compling now PAPER = ${BLUE}$PAPER.tex${NC}"
+				echo "*******************************"
+				$(rubber --pdf $PAPER)
+				echo $PAPER
+				while :; do
+					$(inotifywait $PAPER)
+					$(rubber --pdf $PAPER)
+					sleep 0.01
+				done
+			else
+				echo "Your command line contains no arguments ... "
+				read -p "$(echo -e "See help: Continue? (${YELLOW}Y${NC}/${YELLOW}N${NC}): ")" confirm
+				if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+					do_you_want_to_continue=true
+					help
+				else
+					exit 1
+				fi
+			fi
+		fi
+	done
+
+}
+
+function macOS_latex_compiler() {
+	# --------------- System Information -----------------
+	local VAR="$1"
+	#echo -e "Runn on MacOS:$\n$(sw_vers)"
+	sys_info_name=$(awk -F ":" '{print $1}' <<<"$(sw_vers)")
+	sys_info_version=$(awk -F ":" '{print $2}' <<<"$(sw_vers)")
+	# Converate the block text to a single line items as vector/array
+	eval "line1=($sys_info_name)"
+	eval "line2=($sys_info_version)"
+
+	for ((i = 0; i < ${#line1[@]}; i++)); do
+		printf "${YELLOW}%s${NC}:\t${RED}%s${NC} \n" "${line1[$i]}" "${line2[$i]}"
+	done
+
+	do_you_want_to_continue=true
+
+	while [ "$do_you_want_to_continue" = true ]; do
+		# Handle if the user want to see the help
+		if [[ $1 == "-h" || $1 == "--help" ]]; then
+			help
+			exit 1
+		# Handle if the user want to check the version of this CLI
+		elif [[ $1 == "-v" || $1 == "-V" || $1 == "--version" || $1 == "--Version" ]]; then
+			versions
+			exit 1
+		# Handle if the user correctly input a file that existed in the given directory, then start compiling.
+		elif [[ -f $1 ]]; then
+			if [ $# -gt 0 ] && [ "$2" = "" ]; then
+				echo "Your command line contains $# arguments"
+				echo -e "${YELLOW}Title${NC}:$TITLE"
+				echo -e "${RED}$RIGHT_NOW${NC}"
+				echo -e "Updated on ${YELLOW}$RIGHT_NOW${NC} by ${BLUE}$USER${NC}"
+				PAPER=$(echo "$1.tex")
+				echo "*******************************"
+				echo -e "Compling now PAPER = ${BLUE}$PAPER.tex${NC}"
+				echo "*******************************"
+				rubber --pdf $PAPER >>/dev/null &
+				counter=1
+				fswatch -o $PAPER | while read; do
+					echo "*******************************"
+					echo -e "${RED}tracking now PAPER${NC} = ${BLUE}$PAPER${NC}\nNumber of changes: ${MAGENTA}$counter${NC}"
+					echo "*******************************"
+					echo "file changed ... "
+					# You can use this command.
+					#pdflatex $PAPER > /dev/null 2>&1
+					# Or to use rubber compiler.
+					rubber --pdf $PAPER >>/dev/null 2>&1
+					sleep 0.01
+					counter=$((counter + 1))
+				done
+			else
+				echo "Your command line contains no arguments ... "
+				read -p "$(echo -e "See help: Continue? (${YELLOW}Y${NC}/${YELLOW}N${NC}): ")" confirm
+				if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+					do_you_want_to_continue=true
+					help
+				else
+					exit 1
+				fi
+			fi
+		# Handle if the user correctly input a file that existed in the given directory, otherwise
+		else
+			echo -e "${RED}$1${NC} is not a file ... " >>/dev/null 2>&1
+			do_you_want_to_continue=false
+			exit 1
+		fi
+	done
+
+}
+
+function check_macOS_dependencies() {
+	dependencies=("pdflatex" "fswatch" "rubber")
+	for ((i = 0; i < ${#dependencies[@]}; i++)); do
+		if [[ -z "$(command -v ${dependencies[$i]})" ]]; then
+			echo -e "[${RED}\uf487${NC} ] ${RED}${dependencies[$i]}${NC} is not installed. Please install it first."
+			exit 1
+		else
+			echo -e "[${RED}\uf487${NC} ] ${GREEN}${dependencies[$i]}${NC} is installed."
+		fi
+	done
+}
+function check_ubuntu_dependencies() {
+	dependencies=("pdflatex" "inotifywait" "rubber")
+	for ((i = 0; i < ${#dependencies[@]}; i++)); do
+		if [[ -z "$(command -v ${dependencies[$i]})" ]]; then
+			echo -e "[${RED}\uf487${NC} ] ${RED}${dependencies[$i]}${NC} is not installed. Please install it first."
+			exit 1
+		else
+			echo -e "[${RED}\uf487${NC} ] ${GREEN}${dependencies[$i]}${NC} is installed."
+		fi
+	done
+}
+
+function main() {
+	if [ "$(uname)" == "Darwin" ]; then
+		# Do something under Mac OS X platform
+		check_macOS_dependencies
+		macOS_latex_compiler $@
+		exit 1
+	elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+		# Do something under GNU/Linux platform
+		ubuntu_latex_compiler $@
+		exit 1
+	fi
+}
+
+main $@
