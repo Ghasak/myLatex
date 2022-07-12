@@ -42,7 +42,7 @@ Check here:
 ```shell
 brew install fswatch
 ```
-### GUN Linux - Ubuntu 20.22
+### GNU/Linux systems - Ubuntu 20.22
 You will need only these packages:
 
 ```shell
@@ -69,5 +69,3 @@ keep the shell running to monitor your `.text` script-file.
 ```shell
 mylatex text_file.tex
 ```
-
-
