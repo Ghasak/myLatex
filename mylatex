@@ -50,6 +50,7 @@ help() {
 	       to install rubber use:
 			Here: ${BLUE}https://tex.stackexchange.com/questions/482780/how-to-install-rubber-on-macos${NC}
 			you will python3 to complile and run here (${BLUE}https://gitlab.com/latex-rubber/rubber/${NC})
+            - I found that we can use 'pdflatex -interaction=nonstopmode <file_name.tex>'and no need to use rubber
 
 	       to install inotify-tools use:
 			The inotify-tools package is not available for macOS. instead use ${RED}fswatch${NC}.
@@ -153,7 +154,7 @@ function macOS_latex_compiler() {
 				echo "*******************************"
 				echo -e "Compling now PAPER = ${BLUE}$PAPER${NC}"
 				echo "*******************************"
-				rubber --pdf $PAPER >>/dev/null &
+				pdflatex -interaction=nonstopmode $PAPER >>/dev/null &
 				counter=1
 				fswatch -o $PAPER | while read; do
 					echo "*******************************"
@@ -163,7 +164,7 @@ function macOS_latex_compiler() {
 					# You can use this command.
 					#pdflatex $PAPER > /dev/null 2>&1
 					# Or to use rubber compiler.
-					rubber --pdf $PAPER >>/dev/null 2>&1
+					pdflatex -interaction=nonstopmode $PAPER >>/dev/null 2>&1
 					sleep 0.01
 					counter=$((counter + 1))
 				done
@@ -189,7 +190,7 @@ function macOS_latex_compiler() {
 }
 
 function check_macOS_dependencies() {
-	dependencies=("pdflatex" "fswatch" "rubber")
+	dependencies=("pdflatex" "fswatch" )
 	for ((i = 0; i < ${#dependencies[@]}; i++)); do
 		if [[ -z "$(command -v ${dependencies[$i]})" ]]; then
 			echo -e "[${RED}\uf487${NC} ] ${RED}${dependencies[$i]}${NC} is not installed. Please install it first."
