@@ -75,49 +75,57 @@ function versions() {
 	exit 2
 }
 
+# ---------------------------------------------------------------------------------
 function ubuntu_latex_compiler() {
-
 	do_you_want_to_continue=true
+
 	while [ "$do_you_want_to_continue" = true ]; do
 		if [[ $1 == "-h" || $1 == "--help" ]]; then
 			help
 			exit 1
-		elif [[ $1 == [vV] || $1 == [Vv][ersion] ]]; then
+		elif [[ $1 == "-v" || $1 == "-V" || $1 == "--version" || $1 == "--Version" ]]; then
 			versions
 			exit 1
-		else
-
+		elif [[ $1 == *.tex ]]; then
 			if [ $# -gt 0 ] && [ "$2" = "" ]; then
 				echo "Your command line contains $# arguments"
 				echo -e "${YELLOW}Title${NC}:$TITLE"
 				echo -e "${RED}$RIGHT_NOW${NC}"
 				echo -e "Updated on ${YELLOW}$RIGHT_NOW${NC} by ${BLUE}$USER${NC}"
-				PAPER=$(echo "$1.tex")
+				PAPER=$(echo "$1")
 				echo "*******************************"
-				echo -e "Compling now PAPER = ${BLUE}$PAPER.tex${NC}"
+				echo -e "Compiling now PAPER = ${BLUE}$PAPER${NC}"
 				echo "*******************************"
-				$(rubber --pdf $PAPER)
-				echo $PAPER
-				while :; do
-					$(inotifywait $PAPER)
-					$(rubber --pdf $PAPER)
+				pdflatex -interaction=nonstopmode "$PAPER" >>/dev/null &
+				counter=1
+				inotifywait -m -e close_write "$PAPER" | while read -r line; do
+					echo "*******************************"
+					echo -e "${RED}Tracking now PAPER${NC} = ${BLUE}$PAPER${NC}\nNumber of changes: ${MAGENTA}$counter${NC}"
+					echo "*******************************"
+					echo "File changed ... "
+					pdflatex -interaction=nonstopmode "$PAPER" >>/dev/null 2>&1
 					sleep 0.01
+					counter=$((counter + 1))
 				done
-			else
-				echo "Your command line contains no arguments ... "
-				read -p "$(echo -e "See help: Continue? (${YELLOW}Y${NC}/${YELLOW}N${NC}): ")" confirm
-				if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
-					do_you_want_to_continue=true
-					help
-				else
-					exit 1
-				fi
 			fi
+		elif [[ -z $1 ]]; then
+			echo "Your command line contains no arguments ... "
+			read -p "$(echo -e "See help: Continue? (${YELLOW}Y${NC}/${YELLOW}N${NC}): ")" confirm
+			if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+				help
+				exit 1
+			else
+				exit 1
+			fi
+			do_you_want_to_continue=false
+			exit 1
+		else
+			echo -e "${RED}$1${NC} is not a LaTeX file ... "
+			exit 1
 		fi
 	done
-
 }
-
+#----------------------------------------------------------------------------------------
 function macOS_latex_compiler() {
 	# --------------- System Information -----------------
 	local VAR="$1"
